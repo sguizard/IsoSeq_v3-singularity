@@ -150,20 +150,20 @@ Stage: build
 
 
 %help
-    echo "Container was created $BUILD_DATE"
     This container has been built from the miniconda2 docker image. 
-    All pacbio tools have been install with conda (https://github.com/PacificBiosciences/pbbioconda) in the IsoSeq_V3 env. 
-    pbbioconda packages: 
+    All pacbio tools have been install with conda (https://github.com/PacificBiosciences/pbbioconda) in the IsoSeq_V3 env.
+
+    pbbioconda packages:
         - isoseq3
         - pbccs
         - pblima
         - pbmm2
         - pbcoretools
-    
+
     To use the tools, you have to run the container (do not use classical singularity exec)
     eg. ./isoseq3.sif isoseq3 -h
 
-    The relevant installed tools are: 
+    The relevant installed tools are:
         - isoseq3
         - bamsieve
         - dataset
@@ -174,4 +174,3 @@ Stage: build
         - pbvalidate
         - ccs-alt
         - htsfile
-
