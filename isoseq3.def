@@ -1,0 +1,177 @@
+Bootstrap: docker
+From: continuumio/miniconda2
+Stage: build
+
+
+%environment
+    export LC_ALL=C
+    export APPNAME=IsoSeq_V3
+    export APPS_HOME=/apps
+    export ENV_PREFIX=/env/$APPNAME
+    export CONDA_DIR=/opt/conda
+
+
+%post
+    BUILD_DATE=`date`
+    export APPNAME=IsoSeq_V3
+    export APPS_HOME=/apps
+    export ENV_PREFIX=/env/$APPNAME
+    export CONDA_DIR=/opt/conda
+
+    echo "export BUILD_DATE=\"${BUILD_DATE}\"" >> $SINGULARITY_ENVIRONMENT
+    echo "export APPNAME=\"${APPNAME}\"" >> $SINGULARITY_ENVIRONMENT
+    echo "export APPS_HOME=\"${APPS_HOME}\"" >> $SINGULARITY_ENVIRONMENT
+    echo "export ENV_PREFIX=\"${ENV_PREFIX}\"" >> $SINGULARITY_ENVIRONMENT
+    echo "export CONDA_DIR=\"${CONDA_DIR}\"" >> $SINGULARITY_ENVIRONMENT
+
+    conda create --name ${APPNAME}
+    bash -c "
+        source $CONDA_DIR/etc/profile.d/conda.sh && \
+        conda activate ${APPNAME} && \
+        conda install -y -c bioconda isoseq3 && \
+        conda install -y -c bioconda pbccs && \
+        conda install -y -c bioconda lima && \
+        conda install -y -c bioconda pbmm2 && \
+        conda install -y -c bioconda pbcoretools && \
+        conda deactivate"
+
+    apt clean
+
+    # Preparing test script
+    echo "#!/bin/bash  " > /opt/test-script.sh
+    echo "source $CONDA_DIR/etc/profile.d/conda.sh" >> /opt/test-script.sh
+    echo "conda activate ${APPNAME}" >> /opt/test-script.sh
+    echo "isoseq3 -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_ISOSEQ3=$?" >> /opt/test-script.sh
+    echo "bamsieve -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_BAMSIEVE=$?" >> /opt/test-script.sh
+    echo "dataset -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_DATASET=$?" >> /opt/test-script.sh
+    echo "pbmm2 -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_PBMM2=$?" >> /opt/test-script.sh
+    echo "tabix -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_TABIX=$?" >> /opt/test-script.sh
+    echo "pbtools-gather -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_PBTOOLS_GATHER=$?" >> /opt/test-script.sh
+    echo "ccs -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_CCS=$?" >> /opt/test-script.sh
+    echo "pbvalidate -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_PBVALIDATE=$?" >> /opt/test-script.sh
+    echo "ccs-alt -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_CCS_ALT=$?" >> /opt/test-script.sh
+    echo "htsfile -h > /dev/null 2>&1" >> /opt/test-script.sh
+    echo "EXIT_CODE_HTSFILE=$?" >> /opt/test-script.sh
+    echo "ERROR=0" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_ISOSEQ3 -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST isosq3: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST isoseq3: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_BAMSIEVE -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST bamsieve: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST bamsieve: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_DATASET -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST dataset: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST dataset: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_PBMM2 -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST pbmm2: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST pbmm2: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_TABIX -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST tabix: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST tabix: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_PBTOOLS_GATHER -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST pbtools-gather: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST pbtools-gather: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_PBVALIDATE -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST pbvalidate: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST pbvalidate: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_CCS_ALT -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST ccs-alt: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST ccs-alt: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$EXIT_CODE_HTSFILE -eq 0 ]; then" >> /opt/test-script.sh
+    echo "    echo "TEST htsfile: OK"" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    echo "TEST htsfile: NOT OK"" >> /opt/test-script.sh
+    echo "    ERROR=1 " >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+    echo "if [ \$ERROR -eq 1 ]; then" >> /opt/test-script.sh
+    echo "    exit 1" >> /opt/test-script.sh
+    echo "else" >> /opt/test-script.sh
+    echo "    exit 0" >> /opt/test-script.sh
+    echo "fi" >> /opt/test-script.sh
+
+    chmod +x /opt/test-script.sh
+
+%test
+    /opt/test-script.sh
+
+
+%runscript
+    #!/bin/bash
+
+    echo "Container was created $BUILD_DATE"
+    echo ""
+
+    source $CONDA_DIR/etc/profile.d/conda.sh
+
+    conda activate ${APPNAME}
+    echo "Running: $*"
+    echo "In conda env: ${APPNAME}"
+    exec $@
+
+
+%labels
+    Author Sebastien Guizard (Based on https://github.com/joelnitta/sqanti3-docker/commits/main)
+    OS Debian Buster
+    PROG isoseq3
+    Version 3
+
+
+%help
+    echo "Container was created $BUILD_DATE"
+    This container has been built from the miniconda2 docker image. 
+    All pacbio tools have been install with conda (https://github.com/PacificBiosciences/pbbioconda) in the IsoSeq_V3 env. 
+    pbbioconda packages: 
+        - isoseq3
+        - pbccs
+        - pblima
+        - pbmm2
+        - pbcoretools
+    
+    To use the tools, you have to run the container (do not use classical singularity exec)
+    eg. ./isoseq3.sif isoseq3 -h
+
+    The relevant installed tools are: 
+        - isoseq3
+        - bamsieve
+        - dataset
+        - pbmm2
+        - tabix
+        - pbtools-gather
+        - ccs
+        - pbvalidate
+        - ccs-alt
+        - htsfile
+
